@@ -1,15 +1,40 @@
 "use client";
 
-import React from "react";
 import SectionHeading from "./section-heading";
-import { FaPaperPlane } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useSectionInView } from "@/lib/hooks";
 import { sendEmail } from "@/action/sendEmail";
+import { FaPaperPlane } from "react-icons/fa";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
 export default function Contact() {
   const { ref } = useSectionInView("Contact");
+  const [isPending, setIsPending] = useState(false);
 
+  // const [errorMessage, formAction, isPending] = useActionState(
+  //   sendEmail,
+  //   undefined
+  // );
+
+  const handleSendEmail = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    setIsPending(true);
+    try {
+      const { data, error } = await sendEmail(formData);
+      console.log(error);
+      if (error) {
+        toast.error(error);
+        return;
+      }
+
+      toast.success("Email sent successfully");
+    } finally {
+      setIsPending(false);
+    }
+  };
   return (
     <motion.section
       ref={ref}
@@ -34,12 +59,7 @@ export default function Contact() {
         </a>{" "}
         or through this form.
       </p>
-      <form
-        className="mt-10 flex flex-col"
-        action={async (formData) => {
-          await sendEmail(formData);
-        }}
-      >
+      <form className="mt-10 flex flex-col" onSubmit={handleSendEmail}>
         <input
           className="h-14 px-4 rounded-lg borderBlack"
           type="email"
@@ -57,10 +77,17 @@ export default function Contact() {
         />
         <button
           type="submit"
-          className="group h-[3rem] w-[8rem] flex items-center justify-center gap-2 bg-gray-900 text-white rounded-full outline-none transition-all focus:scale-110 hover:scale-110 hover:bg-gray-950"
+          className="group h-[3rem] w-[8rem] flex items-center justify-center gap-2 bg-gray-900 text-white rounded-full outline-none transition-all focus:scale-110 hover:scale-110 hover:bg-gray-950 disabled:bg-opacity-65"
+          disabled={isPending}
         >
-          Submit{" "}
-          <FaPaperPlane className="text-xs opacity-70 transition-all group-hover:translate-x-1 group-hover:-translate-y-1" />{" "}
+          {isPending ? (
+            <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
+          ) : (
+            <>
+              Submit{" "}
+              <FaPaperPlane className="text-xs opacity-70 transition-all group-hover:translate-x-1 group-hover:-translate-y-1" />{" "}
+            </>
+          )}
         </button>
       </form>
     </motion.section>
